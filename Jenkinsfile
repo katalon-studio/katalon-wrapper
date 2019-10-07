@@ -19,8 +19,11 @@ pipeline {
             }
             
             steps {
+                withEnv(["GOPATH=${WORKSPACE}", "GOOS=windows", "GOARCH=amd64"]) {
+                    sh 'go install hello '
+                }
                 withEnv(["GOPATH=${WORKSPACE}"]) {
-                    sh 'env GOOS=windows GOARCH=amd64 go install hello '
+                    sh 'go install hello '
                 }
             }
             
