@@ -2,10 +2,6 @@
 pipeline {
     agent none
 
-    environment {
-        GOPATH = "${WORKSPACE}"
-    }
-
     stages {
         stage ('Build') {
             agent {
@@ -15,8 +11,10 @@ pipeline {
             }
             
             steps {
-                sh 'cd src/hello'
-                sh 'go install'
+                withEnv(["GOPATH=${WORKSPACE}"]) {
+                    sh 'cd src/hello'
+                    sh 'go install'
+                }
             }
             
             post {
