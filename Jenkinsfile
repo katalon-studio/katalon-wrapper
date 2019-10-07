@@ -3,13 +3,15 @@ pipeline {
     agent none
 
     environment {
-        GOPATH = $WORKSPACE
+        GOPATH = '$WORKSPACE'
     }
 
     stages {
         stage ('Build') {
-            docker {
-                image 'golang'
+            agent {
+                docker {
+                    image 'golang'
+                }
             }
             
             steps {
