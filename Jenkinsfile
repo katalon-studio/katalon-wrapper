@@ -14,7 +14,7 @@ pipeline {
             agent {
                 docker {
                     image 'golang'
-                    args '-v /$HOME/docker-cache-go:/tmp/docker-cache-go'
+                    args '-v /$HOME/docker-cache-go:/tmp/docker-cache-go -e "HOME=/tmp/docker-cache-go"'
                 }
             }
             
