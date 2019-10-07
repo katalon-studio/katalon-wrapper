@@ -12,10 +12,7 @@ pipeline {
             
             steps {
                 withEnv(["GOPATH=${WORKSPACE}"]) {
-                    sh 'pwd'
-                    sh 'cd src/hello'
-                    sh 'pwd'
-                    sh 'go install'
+                    sh 'cd src/hello && go install'
                 }
             }
             
