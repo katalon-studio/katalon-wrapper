@@ -20,7 +20,7 @@ pipeline {
             
             steps {
                 withEnv(["GOPATH=${WORKSPACE}"]) {
-                    sh 'cd src/hello && go install'
+                    sh 'env GOOS=windows GOARCH=amd64 go install hello '
                 }
             }
             
