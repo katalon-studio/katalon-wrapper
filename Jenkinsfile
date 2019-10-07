@@ -3,7 +3,7 @@ pipeline {
     agent none
 
     environment {
-        GOPATH = "${env.WORKSPACE}"
+        GOPATH = "${WORKSPACE}"
     }
 
     stages {
