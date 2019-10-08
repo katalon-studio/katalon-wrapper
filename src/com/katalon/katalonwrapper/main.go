@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import ( 
+  "com/katalon/katalonwrapper/download"
+  "os"
+)
 
 func main() {
-  fmt.Println("Hello, World.")
+    ksVersion := os.Args[1]
+    download.GetVersion(ksVersion)
 }
