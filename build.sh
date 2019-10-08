@@ -1,13 +1,8 @@
 
-#!/usr/bin/env bash
+#!/bin/bash
 
 package=$1
-if [[ -z "$package" ]]; then
-  echo "usage: $0 <package-name>"
-  exit 1
-fi
-package_split=(${package//\// })
-package_name=${package_split[-1]}
+package_name=${package}
 
 platforms=("windows/amd64" "linux/amd64")
 
