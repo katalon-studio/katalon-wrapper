@@ -20,7 +20,7 @@ pipeline {
             
             steps {
                 withEnv(["GOPATH=${WORKSPACE}"]) {
-                    sh 'chmod +x build.sh && ./build.sh hello'
+                    sh 'chmod +x build.sh && ./build.sh com/katalon/katalonwrapper'
                 }
             }
             

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 package=$1
-package_name=${package}
+package_split=(${package//\// })
+package_name=${package_split[-1]}
 
 platforms=("windows/amd64" "linux/amd64")
 
