@@ -1,19 +1,14 @@
 package main
 
-import ( 
-  "com/katalon/katalonwrapper/download"
-  "com/katalon/katalonwrapper/executor"
-  "os"
+import (
+	"com/katalon/katalonwrapper/download"
+	"fmt"
 )
 
 func main() {
-    command := os.Args[1]
-    if(command == "download") {
-      ksVersion := os.Args[2]
-      download.GetVersion(ksVersion)
-    } else if(command == "run") {
-      pathToKat := os.Args[2]
-      args := os.Args[3:]
-      executor.Execute(pathToKat, args)
-    }
+	//ksVersion := os.Args[1]
+	//download.GetVersion(ksVersion)
+	var version = "6.3.3"
+	katalonDir := download.GetKatalonPackage(version)
+	fmt.Println("Katalon Directory:", katalonDir)
 }
