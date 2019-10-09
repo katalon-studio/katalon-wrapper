@@ -9,6 +9,6 @@ func main() {
 	//ksVersion := os.Args[1]
 	//download.GetVersion(ksVersion)
 	var version = "6.3.3"
-	katalonDir := download.GetKatalonPackage(version)
-	fmt.Println("Katalon Directory:", katalonDir)
+	katalonDir := download.GetKatalonPackage(version, "")
+	fmt.Println("Katalon Directory", katalonDir)
 }

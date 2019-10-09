@@ -2,12 +2,14 @@ package download
 
 import (
 	"archive/zip"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -46,6 +48,56 @@ func isDirectory(path string) bool {
 		return true
 	}
 	return false
+}
+
+func getDomainName(URL string) (string, error) {
+	u, err := url.Parse(URL)
+	if err != nil {
+		return "", err
+	}
+
+	hostname := u.Hostname()
+	parts := strings.Split(hostname, ".")
+
+	if len(parts) <= 2 {
+		// e.g. https://github.com, http://localhost:3000
+		return hostname, nil
+	}
+
+	// Note: not supporting IP address such as 127.0.0.1, so it will result in 0.0.1
+	domain := strings.Join(parts[1:], ".")
+	return domain, nil
+}
+
+func getHttpClient(URL, proxyURL string) (*http.Client, error) {
+	var httpProxyURL func(*http.Request) (*url.URL, error) = nil
+	if proxyURL != "" {
+		proxyURL, err := url.Parse(proxyURL)
+		if err != nil {
+			return nil, err
+		}
+		httpProxyURL = http.ProxyURL(proxyURL)
+	}
+
+	domain, err := getDomainName(URL)
+	if err != nil {
+		return nil, err
+	}
+	transport := &http.Transport{
+		Proxy:           httpProxyURL,
+		TLSClientConfig: &tls.Config{ServerName: domain},
+	}
+
+	client := &http.Client{Transport: transport, CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		redirectDomain, err := getDomainName(req.URL.String())
+		if err != nil {
+			return err
+		}
+		// Overwrite tls config on redirect
+		transport.TLSClientConfig = &tls.Config{ServerName: redirectDomain}
+		return nil
+	}}
+	return client, nil
 }
 
 type KatalonVersion struct {
@@ -97,9 +149,14 @@ func GetKatalonDirectory(version string) string {
 	return p
 }
 
-func DownloadFile(fileUrl string, out *os.File) error {
+func DownloadFile(fileURL string, out *os.File, proxyURL string) error {
+	client, err := getHttpClient(fileURL, proxyURL)
+	if err != nil {
+		return err
+	}
+
 	// Get the data
-	resp, err := http.Get(fileUrl)
+	resp, err := client.Get(fileURL)
 	if err != nil {
 		return err
 	}
@@ -172,14 +229,14 @@ func UnzipFile(src, dest string) ([]string, error) {
 	return extractedPaths, nil
 }
 
-func DownloadAndExtract(fileUrl, targetDir string) {
-	log.Printf("Downloading Katalon Studio from %s. It may take a few minutes.", fileUrl)
+func DownloadAndExtract(fileURL, targetDir, proxyURL string) {
+	log.Printf("Downloading Katalon Studio from %s. It may take a few minutes.", fileURL)
 
 	tempFile, _ := ioutil.TempFile(targetDir, "Katalon-")
 	packagePath := tempFile.Name()
 	defer tempFile.Close()
 
-	err := DownloadFile(fileUrl, tempFile)
+	err := DownloadFile(fileURL, tempFile, proxyURL)
 	handleErrorIfExists(err, "Unable to download Katalon package.")
 
 	log.Printf("Extract %s to %s", packagePath, targetDir)
@@ -191,7 +248,7 @@ func DownloadAndExtract(fileUrl, targetDir string) {
 	os.Remove(packagePath)
 }
 
-func GetKatalonPackage(version string) string {
+func GetKatalonPackage(version, proxyURL string) string {
 	katalonDir := GetKatalonDirectory(version)
 	err := ensureDir(katalonDir)
 	handleErrorIfExists(err, fmt.Sprintf("Unable to create directory %s to store Katalon Studio package.", katalonDir))
@@ -208,9 +265,9 @@ func GetKatalonPackage(version string) string {
 		handleErrorIfExists(err, fmt.Sprintf("Unable to create directory %s to store Katalon Studio package.", katalonDir))
 
 		katalonVersion := GetVersion(version)
-		versionUrl := katalonVersion.Url
+		versionURL := katalonVersion.Url
 
-		DownloadAndExtract(versionUrl, katalonDir)
+		DownloadAndExtract(versionURL, katalonDir, proxyURL)
 		_, err = os.Create(fileLog)
 		handleErrorIfExists(err, "")
 		log.Println("Katalon Studio has been installed successfully.")
