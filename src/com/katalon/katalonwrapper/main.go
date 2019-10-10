@@ -10,7 +10,7 @@ import (
 )
 
 func commandLineUsage() {
-	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [OPTIONS] version\n", os.Args[0])
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [OPTIONS] version [argument...]\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -36,5 +36,7 @@ func main() {
 		// Execute Katalon command
 		commandArgs := remainingArgs[1:]
 		executor.Execute(katalonDir, commandArgs)
+	} else {
+		log.Println("Arguments are empty, no test will be executed.")
 	}
 }
