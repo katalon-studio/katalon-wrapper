@@ -2,6 +2,7 @@ package download
 
 import (
 	"archive/zip"
+	"com/katalon/katalonwrapper/utils"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -18,37 +19,6 @@ import (
 )
 
 const Releases = "https://raw.githubusercontent.com/katalon-studio/katalon-studio/master/releases.json"
-
-func handleErrorIfExists(err error, additionalMessage string) {
-	if err != nil {
-		if additionalMessage == "" {
-			log.Fatal(err)
-		}
-		log.Fatalf(additionalMessage, err)
-	}
-}
-
-func ensureDir(dirPath string) error {
-	if err := os.MkdirAll(dirPath, os.ModeDir); err == nil {
-		return nil
-	} else {
-		return err
-	}
-}
-
-func exists(filePath string) bool {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func isDirectory(path string) bool {
-	if info, err := os.Stat(path); err == nil && info.IsDir() {
-		return true
-	}
-	return false
-}
 
 func getDomainName(URL string) (string, error) {
 	u, err := url.Parse(URL)
@@ -105,9 +75,9 @@ type KatalonVersion struct {
 }
 
 func GetOS() string {
-	os := runtime.GOOS
+	osName := runtime.GOOS
 	arch := runtime.GOARCH
-	switch os {
+	switch osName {
 	case "windows":
 		if strings.Contains(arch, "64") {
 			return "windows 64"
@@ -124,16 +94,16 @@ func GetOS() string {
 
 func GetVersion(ksVersion string) (version KatalonVersion) {
 	resp, err := http.Get(Releases)
-	handleErrorIfExists(err, "")
+	utils.HandleErrorIfExists(err, "")
 	defer resp.Body.Close()
 
 	katalonVersions := make([]KatalonVersion, 0)
 	err = json.NewDecoder(resp.Body).Decode(&katalonVersions)
-	handleErrorIfExists(err, "")
+	utils.HandleErrorIfExists(err, "")
 
-	os := GetOS()
+	osInfo := GetOS()
 	for _, v := range katalonVersions {
-		if v.Version == ksVersion && strings.EqualFold(v.Os, os) {
+		if v.Version == ksVersion && strings.EqualFold(v.Os, osInfo) {
 			version = v
 			return
 		}
@@ -219,8 +189,8 @@ func UnzipFile(src, dest string) ([]string, error) {
 		_, err = io.Copy(outFile, rc)
 
 		// Close the file without defer to close before next iteration of loop
-		outFile.Close()
-		rc.Close()
+		_ = outFile.Close()
+		_ = rc.Close()
 
 		if err != nil {
 			return extractedPaths, err
@@ -237,50 +207,50 @@ func DownloadAndExtract(fileURL, targetDir, proxyURL string) {
 	defer tempFile.Close()
 
 	err := DownloadFile(fileURL, tempFile, proxyURL)
-	handleErrorIfExists(err, "Unable to download Katalon package.")
+	utils.HandleErrorIfExists(err, "Unable to download Katalon package.\n")
 
 	log.Printf("Extract %s to %s", packagePath, targetDir)
 	_, err = UnzipFile(packagePath, targetDir)
 
-	handleErrorIfExists(err, fmt.Sprintf("Unable to extract %s to %s.", packagePath, targetDir))
+	utils.HandleErrorIfExists(err, fmt.Sprintf("Unable to extract %s to %s.\n", packagePath, targetDir))
 
-	tempFile.Close()
-	os.Remove(packagePath)
+	_ = tempFile.Close()
+	_ = os.Remove(packagePath)
 }
 
 func GetKatalonPackage(version, proxyURL string) string {
 	katalonDir := GetKatalonDirectory(version)
-	err := ensureDir(katalonDir)
-	handleErrorIfExists(err, fmt.Sprintf("Unable to create directory %s to store Katalon Studio package.", katalonDir))
+	err := utils.EnsureDir(katalonDir)
+	utils.HandleErrorIfExists(err, fmt.Sprintf("Unable to create directory %s to store Katalon Studio package.\n", katalonDir))
 
 	fileLog := filepath.Join(katalonDir, ".katalon.done")
 
-	if exists(fileLog) {
+	if utils.Exists(fileLog) {
 		log.Println("Katalon Studio package has been downloaded already.")
 	} else {
 		err := os.RemoveAll(katalonDir)
-		handleErrorIfExists(err, "")
+		utils.HandleErrorIfExists(err, "")
 
-		err = ensureDir(katalonDir)
-		handleErrorIfExists(err, fmt.Sprintf("Unable to create directory %s to store Katalon Studio package.", katalonDir))
+		err = utils.EnsureDir(katalonDir)
+		utils.HandleErrorIfExists(err, fmt.Sprintf("Unable to create directory %s to store Katalon Studio package.\n", katalonDir))
 
 		katalonVersion := GetVersion(version)
 		versionURL := katalonVersion.Url
 
 		DownloadAndExtract(versionURL, katalonDir, proxyURL)
 		_, err = os.Create(fileLog)
-		handleErrorIfExists(err, "")
+		utils.HandleErrorIfExists(err, "")
 		log.Println("Katalon Studio has been installed successfully.")
 	}
 
 	katalonContainingDir := ""
 	childrenNames, err := ioutil.ReadDir(katalonDir)
-	handleErrorIfExists(err, "")
+	utils.HandleErrorIfExists(err, "")
 
 	for _, childrenName := range childrenNames {
 		fullPath := filepath.Join(katalonDir, childrenName.Name())
 
-		if isDirectory(fullPath) && strings.Contains(childrenName.Name(), "Katalon") {
+		if utils.IsDirectory(fullPath) && strings.Contains(childrenName.Name(), "Katalon") {
 			katalonContainingDir = fullPath
 			break
 		}

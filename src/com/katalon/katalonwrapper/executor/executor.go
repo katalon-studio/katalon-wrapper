@@ -1,11 +1,13 @@
 package executor
 
 import (
-	"fmt"
+	"com/katalon/katalonwrapper/utils"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -19,16 +21,15 @@ func Execute(katPath string, args []string) {
 	)
 	// Find katalonc (run time engine) within the provided katPath
 	files, err = filePathWalkDir(katPath)
-	if err != nil {
-		panic(err)
-	}
+	utils.HandleErrorIfExists(err, "Unable to find Katalon executable.\n")
 
 	for _, file := range files {
 		filePathSeparatedByDash := strings.Split(file, string(os.PathSeparator))
+		_, _ = regexp.MatchString("p([a-z]+)ch", "peach")
 		lastEle := filePathSeparatedByDash[len(filePathSeparatedByDash)-1]
-		if lastEle == "katalon" {
+		if isExecutable, _ := regexp.MatchString("^katalon(.exe)?$", lastEle); isExecutable {
 			pathToRuntimeEngine = file
-			fmt.Println("Path to runtime engine: ", file)
+			log.Println("Path to runtime engine: ", file)
 			break
 		}
 	}
@@ -38,15 +39,13 @@ func Execute(katPath string, args []string) {
 
 func internallyMakeRuntimeEngineExecutable(pathToRuntimeEngine string) {
 	err := os.Chmod(pathToRuntimeEngine, 0777)
-	if err != nil {
-		fmt.Println(err)
-	}
+	utils.HandleErrorIfExists(err, "")
 }
 
 func internallyExecute(katExecutable string, args []string) {
-	fmt.Println("Katalon Executable: ", katExecutable)
+	log.Println("Katalon Executable:", katExecutable)
 	for _, v := range args {
-		fmt.Println("Katalon Argument: ", v)
+		log.Println("Katalon Argument:", v)
 	}
 	RunCMD(katExecutable, args)
 }
@@ -57,9 +56,7 @@ func RunCMD(path string, args []string) {
 	cmd.Stdout = mwriter
 	cmd.Stderr = mwriter
 	err := cmd.Run()
-	if err != nil {
-		panic(err)
-	}
+	utils.HandleErrorIfExists(err, "")
 }
 
 func filePathWalkDir(root string) ([]string, error) {
