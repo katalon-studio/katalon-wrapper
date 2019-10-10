@@ -22,7 +22,6 @@ func main() {
 	flag.StringVar(&proxyURL, "proxy", "", "Proxy server address (i.e. http://[host]:[port])")
 
 	flag.Parse()
-	flag.Usage()
 
 	remainingArgs := flag.Args()
 	nArgs := flag.NArg()
