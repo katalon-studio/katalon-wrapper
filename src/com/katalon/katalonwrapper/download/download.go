@@ -1,8 +1,10 @@
 package download
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"com/katalon/katalonwrapper/utils"
+	"compress/gzip"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -144,6 +146,11 @@ func DownloadFile(fileURL string, out *os.File, proxyURL string) error {
 func UnzipFile(src, dest string) ([]string, error) {
 	var extractedPaths []string
 
+	dest, err := filepath.Abs(dest)
+	if err != nil {
+		return extractedPaths, err
+	}
+
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return extractedPaths, err
@@ -164,8 +171,7 @@ func UnzipFile(src, dest string) ([]string, error) {
 
 		if f.FileInfo().IsDir() {
 			// Make Folder
-			err = os.MkdirAll(filePath, os.ModePerm)
-			if err != nil {
+			if err = os.MkdirAll(filePath, os.ModePerm); err != nil {
 				return extractedPaths, err
 			}
 			continue
@@ -199,6 +205,82 @@ func UnzipFile(src, dest string) ([]string, error) {
 	return extractedPaths, nil
 }
 
+func UntarFile(src, dest string) ([]string, error) {
+	var extractedPaths []string
+
+	dest, err := filepath.Abs(dest)
+	if err != nil {
+		return extractedPaths, err
+	}
+
+	reader, err := os.Open(src)
+	if err != nil {
+		return extractedPaths, err
+	}
+	defer reader.Close()
+
+	gzipReader, err := gzip.NewReader(reader)
+	if err != nil {
+		return extractedPaths, err
+	}
+
+	tarReader := tar.NewReader(gzipReader)
+
+	for {
+		f, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return extractedPaths, err
+		}
+
+		// Store filename/path for returning and using later on
+		filePath := filepath.Join(dest, f.Name)
+
+		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
+		if !strings.HasPrefix(filePath, filepath.Clean(dest)+string(os.PathSeparator)) {
+			return extractedPaths, fmt.Errorf("illegal file path: %s", filePath)
+		}
+
+		extractedPaths = append(extractedPaths, f.Name)
+
+		if f.FileInfo().IsDir() {
+			// Make Folder
+			if err = os.MkdirAll(filePath, os.ModePerm); err != nil {
+				return extractedPaths, err
+			}
+			continue
+		}
+
+		outFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.FileInfo().Mode())
+		if err != nil {
+			return extractedPaths, err
+		}
+
+		_, err = io.Copy(outFile, tarReader)
+
+		// Close the file without defer to close before next iteration of loop
+		_ = outFile.Close()
+
+		if err != nil {
+			return extractedPaths, err
+		}
+	}
+	return extractedPaths, nil
+}
+
+func ExtractFile(src, dest string) ([]string, error) {
+	ext := filepath.Ext(src)
+	switch ext {
+	case ".zip":
+		return UnzipFile(src, dest)
+	case ".gz": // .tar.gz
+		return UntarFile(src, dest)
+	default:
+		return nil, fmt.Errorf("unsupported extension %s", ext)
+	}
+}
+
 func DownloadAndExtract(fileURL, targetDir, proxyURL string) {
 	log.Printf("Downloading Katalon Studio from %s. It may take a few minutes.", fileURL)
 
@@ -210,7 +292,7 @@ func DownloadAndExtract(fileURL, targetDir, proxyURL string) {
 	utils.HandleErrorIfExists(err, "Unable to download Katalon package.\n")
 
 	log.Printf("Extract %s to %s", packagePath, targetDir)
-	_, err = UnzipFile(packagePath, targetDir)
+	_, err = ExtractFile(packagePath, targetDir)
 
 	utils.HandleErrorIfExists(err, fmt.Sprintf("Unable to extract %s to %s.\n", packagePath, targetDir))
 

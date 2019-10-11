@@ -20,3 +20,21 @@ func TestGetVersion(t *testing.T) {
 		t.Errorf("Invalid katalon version %v", katalonVersion)
 	}
 }
+
+func TestExtractFileZip(t *testing.T) {
+	macZip := "Katalon.Studio.app.zip"
+	extractedFiles, err := ExtractFile(macZip, ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(extractedFiles)
+}
+
+func TestExtractFileTar(t *testing.T) {
+	linuxTar := "Katalon_Studio_Linux_64-6.3.3.tar.gz"
+	extractedFiles, err := ExtractFile(linuxTar, ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(extractedFiles)
+}
