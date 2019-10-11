@@ -9,8 +9,12 @@ import (
 	"os"
 )
 
+var (    
+    BuildVersion string = ""
+)
+
 func commandLineUsage() {
-	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [OPTIONS] version [argument...]\n", os.Args[0])
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [OPTIONS] katalon-version [argument...]\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -28,6 +32,9 @@ func main() {
 	if nArgs < 1 {
 		log.Fatal("Katalon version must be provided.")
 	}
+
+	log.Println("Katalon Wrapper version:", BuildVersion)
+
 	ksVersion = remainingArgs[0]
 
 	katalonDir := download.GetKatalonPackage(ksVersion, proxyURL)
