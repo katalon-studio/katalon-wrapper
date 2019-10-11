@@ -281,10 +281,10 @@ func ExtractFile(src, dest string) ([]string, error) {
 	}
 }
 
-func DownloadAndExtract(fileURL, targetDir, proxyURL string) {
+func DownloadAndExtract(fileURL, fileName, targetDir, proxyURL string) {
 	log.Printf("Downloading Katalon Studio from %s. It may take a few minutes.", fileURL)
 
-	tempFile, _ := ioutil.TempFile(targetDir, "Katalon-")
+	tempFile, _ := os.Create(filepath.Join(targetDir, fileName))
 	packagePath := tempFile.Name()
 	defer tempFile.Close()
 
@@ -318,8 +318,9 @@ func GetKatalonPackage(version, proxyURL string) string {
 
 		katalonVersion := GetVersion(version)
 		versionURL := katalonVersion.Url
+		fileName := katalonVersion.Filename
 
-		DownloadAndExtract(versionURL, katalonDir, proxyURL)
+		DownloadAndExtract(versionURL, fileName, katalonDir, proxyURL)
 		_, err = os.Create(fileLog)
 		utils.HandleErrorIfExists(err, "")
 		log.Println("Katalon Studio has been installed successfully.")
