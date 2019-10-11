@@ -15,7 +15,7 @@ func HandleErrorIfExists(err error, additionalMessage string) {
 }
 
 func EnsureDir(dirPath string) error {
-	if err := os.MkdirAll(dirPath, os.ModeDir); err == nil {
+	if err := os.MkdirAll(dirPath, os.ModeDir|os.ModePerm); err == nil {
 		return nil
 	} else {
 		return err
