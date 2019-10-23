@@ -27,7 +27,7 @@ func Execute(katPath string, args []string) {
 		filePathSeparatedByDash := strings.Split(file, string(os.PathSeparator))
 		_, _ = regexp.MatchString("p([a-z]+)ch", "peach")
 		lastEle := filePathSeparatedByDash[len(filePathSeparatedByDash)-1]
-		if isExecutable, _ := regexp.MatchString("^katalon(.exe)?$", lastEle); isExecutable {
+		if isExecutable, _ := regexp.MatchString("^katalon(c)?(.exe)?$", lastEle); isExecutable {
 			pathToRuntimeEngine = file
 			log.Println("Path to runtime engine: ", file)
 			break
