@@ -31,7 +31,7 @@ func main() {
 
 	if printVersion {
 		fmt.Println("Katalon Wrapper version:", BuildVersion)
-		return
+		os.Exit(0)
 	}
 
 	remainingArgs := flag.Args()
