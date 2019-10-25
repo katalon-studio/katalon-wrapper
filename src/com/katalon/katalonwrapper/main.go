@@ -9,8 +9,8 @@ import (
 	"os"
 )
 
-var (    
-    BuildVersion string = ""
+var (
+	BuildVersion = ""
 )
 
 func commandLineUsage() {
@@ -20,12 +20,19 @@ func commandLineUsage() {
 
 func main() {
 	var ksVersion, proxyURL string
+	var printVersion bool
 
 	flag.Usage = commandLineUsage
 
 	flag.StringVar(&proxyURL, "proxy", "", "Proxy server address (i.e. http://[host]:[port])")
+	flag.BoolVar(&printVersion, "version", false, "Current version")
 
 	flag.Parse()
+
+	if printVersion {
+		fmt.Println("Katalon Wrapper version:", BuildVersion)
+		return
+	}
 
 	remainingArgs := flag.Args()
 	nArgs := flag.NArg()
