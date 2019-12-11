@@ -23,4 +23,6 @@ jobs:
         echo ${GOROOT}
 
     - name: Build
-      run: chmod +x build.sh && ./build.sh katalonwrapper
+      run: chmod +x build.sh && ./build.sh com/katalon/katalonwrapper
+      env: 
+        GOPATH: /home/runner/work/katalon-wrapper/katalon-wrapper
