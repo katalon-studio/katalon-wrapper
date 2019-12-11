@@ -18,4 +18,4 @@ jobs:
 
 
     - name: Build
-      run: chmod +x build.sh && ./build.sh com/katalon/katalonwrapper
+      run: chmod +x build.sh && ./build.sh katalonwrapper
