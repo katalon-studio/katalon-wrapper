@@ -27,3 +27,7 @@ jobs:
         # Artifact name
         name: katalon-wrapper
         path: bin
+    - name: Slack Notification
+      uses: rtCamp/action-slack-notify@master
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
